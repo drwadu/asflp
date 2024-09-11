@@ -1,0 +1,28 @@
+% transmitter fell off
+fell_off[1.0;1.0]
+
+% has been worn 1 day (10% of 10 days)
+duration[0.1;0.1]
+
+% was placed on stomach
+used_stomach[1.0;1.0]
+
+% either placed on stomach or arm
+used_stomach :- -used_arm
+used_arm :- -used_stomach
+
+% placing on stomach was considered misuse back in the day
+misuse :- -used_stomach
+
+% using arm and doing sports risks losing transmitter
+negligent :- sports, used_arm
+
+% long duration and doing sports risks losing transmitter
+negligent :- sports, duration
+
+% known cases of fallen off transmitters
+% model as domain/expert knowledge
+fell_off :-[0.0;1.0] sports, misuse
+fell_off :- sports, -misuse
+fell_off :- negligent, misuse
+fell_off :- negligent, -misuse

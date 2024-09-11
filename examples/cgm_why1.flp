@@ -1,0 +1,23 @@
+fell_off[1.0;1.0]
+duration[0.5;0.5]
+%
+used_stomach :- -used_arm
+used_arm :- -used_stomach
+%
+misuse :- -used_stomach
+%
+negligent :- sports, used_arm
+negligent :- sports, duration
+%
+fell_off :- sports, misuse
+fell_off :- sports, -misuse
+fell_off :- negligent, misuse
+fell_off :- negligent, -misuse
+%
+%aux_ic[0.0;0.0]
+%aux_ic :- -used_stomach, -used_arm
+explanation :- negligent
+explanation :- misuse
+explanation :- sports
+explanation :- used_arm
+explanation[1.0;1.0]

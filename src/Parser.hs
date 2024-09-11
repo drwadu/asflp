@@ -33,11 +33,6 @@ parseBodyBounds' x = (b, (read (head xs) :: Double, read (last xs) :: Double))
     xs = split ";" . last . split ":-[" . head . split "]" $ x
     b = (rm' . rm . head . split ":-" $ x) ++ " (AND " ++ (unwords . sort . map (rm' . rm) . split conjunction . rm' . rm . last $ split "]" x) ++ ")"
 
--- parseBodyBounds' x = (b, (read (head xs) :: Double, read (last xs) :: Double))
---  where
---    xs = split ";" . last . split ":-[" . head . split "]" $ x
---    b = "(AND " ++ (unwords . map (rm' . rm) . split conjunction . rm' . rm . last $ split "]" x) ++ ")"
-
 headBody :: Map.Map [Char] [[[Char]]] -> String -> Map.Map [Char] [[[Char]]]
 headBody m x = Map.insert h (b' ++ [b]) m
   where
