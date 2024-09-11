@@ -1,0 +1,19 @@
+a[0.2;0.7]
+b[0.3;0.6]
+%aux_e_d_and_-f[0.2;0.4]
+%aux_e_a_and_-c[0.0;0.0]
+%aux_g_d_and_-f[0.6;0.6]
+a :- -b
+b :- -a
+c :- -d, b
+d :- -c, b
+%e :-[0.2;0.4] a, -c
+%e :-[0.0;0.0] d, f
+e :- a, -c
+e :- d, f
+g :- d, f
+%e :- a, -c, aux_e_a_and_-c
+%e :- d, f, aux_e_d_and_-f
+%g :- d, f, aux_g_d_and_-f
+f :- a
+h :- -c, a

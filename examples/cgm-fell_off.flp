@@ -1,0 +1,24 @@
+disinfection[0.0;0.3]
+petting[0.2;0.8]
+used_stomach[0.0;0.4]
+used_arm[0.4;0.9]
+sports[0.2;0.7]
+duration(low)[0.0;0.6]
+duration(mid)[0.5;1.0]
+duration(high)[0.8;1.0]
+% user used either stomach or arm
+used_stomach :- -used_arm
+used_arm :- -used_stomach
+%
+% user made mistake
+misuse :- -disinfection
+misuse :- -petting
+light_misuse :- -used_stomach
+% transmitter age
+transmitter_duration_ok :- -duration(high)
+%
+fell_off :- -disinfection, petting, sports, used_arm, duration(low)
+fell_off :- -disinfection, sports, used_arm
+fell_off :- -disinfection, petting, sports, used_stomach, duration(high)
+fell_off :- -disinfection, petting, sports, used_stomach
+fell_off :- disinfection, petting, used_stomach, duration(mid)
