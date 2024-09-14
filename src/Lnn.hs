@@ -224,3 +224,29 @@ inferDbg i xs = if lnnCmp x x' <= epsilon then xs else inferDbg i (xs ++ [x])
 
 -- boundsPredicate i (V s l u) = "bounds(lnn" ++ show i ++ "," ++ "\"" ++ s ++ "\"," ++ show (10 * l) ++ "," ++ "\"" ++ show (10 * u) ++ "\") "
 boundsPredicate i (V s l u) = "bounds(lnn" ++ show i ++ "," ++ s ++ "," ++ show (floor $ 10 * l) ++ "," ++ show (floor $ 10 * u) ++ ")"
+
+bn0 =
+  [ V "a" 0.2 0.7, -- 0
+    V "b" 0.3 0.6, -- 1
+    V "c" 0.0 1.0, -- 2
+    V "d" 0.0 1.0, -- 3
+    N "-a" 0 0.0 1.0, -- 4
+    N "-b" 1 0.0 1.0, -- 5
+    N "-c" 2 0.0 1.0, -- 6
+    N "-d" 3 0.0 1.0, -- 7
+    I "rhs a" 5 0 0.0 1.0, -- 8
+    I "lhs a" 0 5 0.0 1.0, -- 9
+    A "proof a" [8, 9] 0.0 1.0, -- 10
+    I "rhs b" 4 1 0.0 1.0, -- 11
+    I "lhs b" 1 4 0.0 1.0, -- 12
+    A "proof b" [11, 12] 0.0 1.0, -- 13
+    A "(AND -d b)" [7, 1] 0.0 1.0, -- 14
+    I "rhs c" 14 2 0.0 1.0, -- 15
+    I "lhs c" 2 14 0.0 1.0, -- 16
+    A "proof c" [15, 16] 0.0 1.0, -- 17
+    A "(AND -c b)" [6, 1] 0.0 1.0, -- 18
+    I "rhs d" 18 3 0.0 1.0, -- 19
+    I "lhs d" 3 18 0.0 1.0, -- 20
+    A "proof d" [19, 20] 0.0 1.0, -- 21
+    A "root" [10, 13, 17, 21] 0.0 1.0
+  ]

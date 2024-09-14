@@ -8,6 +8,9 @@ where
 
 import Data.List (sort)
 import qualified Data.Map as Map
+import Fuzzy
+  ( Value,
+  )
 import Utils (rm, rm', split)
 
 type Sym = String
@@ -21,7 +24,7 @@ conjunction = ","
 comment :: Char
 comment = '%'
 
-parseBounds' :: [Char] -> ([Char], (Double, Double))
+-- parseBounds' :: [Char] -> ([Char], (Value, Value))
 parseBounds' x = (a, (read (last $ split "[" (head xs)) :: Double, read (init $ head (tail xs)) :: Double))
   where
     a = head $ split "[" x

@@ -3,6 +3,7 @@ module Utils where
 import Data.Char (isSpace)
 import Data.List (isPrefixOf)
 import qualified Data.Sequence as Seq
+import Fuzzy (Eval)
 
 remove :: Int -> [a] -> [a]
 remove _ [] = []
@@ -30,10 +31,10 @@ rm = unlines . map (dropWhile isSpace) . lines
 rm' :: [Char] -> [Char]
 rm' = reverse . dropWhile isSpace . reverse
 
-truncate' :: Double -> Int -> Double
+truncate' :: (Fractional a, RealFrac a) => a -> Int -> a
 truncate' x n = fromIntegral (floor (x * t)) / t
   where
     t = 10 ^ n
 
-round' :: Double -> Double
+round' :: (Fractional a, RealFrac a) => a -> a
 round' x = truncate' x 3
