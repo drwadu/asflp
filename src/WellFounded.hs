@@ -1,4 +1,4 @@
-module WellFounded (Expression (..), evaluate, tp, fpi, tp', awp, fpFpi, fpAwp) where
+module WellFounded (Expression (..), evaluate, tp, fpi, tp', awp, fpFpi, fpAwp, fpTp') where
 
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
@@ -79,3 +79,17 @@ fpAwp i flp = if iCmp i j' <= epsilon then j' else fpAwp j' flp
   where
     j' = awp i flp
     epsilon = 0.0001
+
+fpTp' i flp = do
+  print j'
+  if iCmp i j' <= epsilon
+    then do print "done"; return j'
+    else fpTp' j' flp
+  where
+    j' = Map.fromList $ tp' i flp
+    epsilon = 0.0001
+
+-- fpTp' i flp = if iCmp i j' <= epsilon then j' else fpTp' j' flp
+--  where
+--    j' = Map.fromList $ tp' i flp
+--    epsilon = 0.0001

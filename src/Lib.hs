@@ -26,6 +26,13 @@ module Lib
     Neuron,
     complete,
     solveWithAssumptions,
+    fpTp',
+    infer,
+    display,
+    lnnCmp,
+    LogicalNeuron (..),
+    LnnOperator (..),
+    proof,
   )
 where
 
@@ -43,6 +50,7 @@ import Inference
     downwardPass,
     infer,
     inferDebug,
+    lnnCmp,
     upwardPass,
   )
 import Neuron
@@ -58,12 +66,18 @@ import Parser
   ( parse,
     parseBounds',
   )
+import Simplification
+  ( LnnOperator (..),
+    LogicalNeuron (..),
+    proof,
+  )
 import WellFounded
   ( Expression (..),
     awp,
     evaluate,
     fpAwp,
     fpFpi,
+    fpTp',
     fpi,
     tp,
     tp',
@@ -72,7 +86,8 @@ import WellFounded
 solveWithAssumptions i lnn assumptions = do
   mapM_ (putStr . display) ns
   putStrLn ""
-  inferDebug i ns'
+  x <- inferDebug i ns'
+  mapM_ (putStr . display) x
   where
     ns' = Seq.take i ns Seq.|> root
     -- root = update (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Value) (1.0 :: Value)
@@ -92,9 +107,12 @@ solve i lnn = infer i lnn'
     ns = upwardPass lnn
 
 solveDebug i lnn = do
-  mapM_ print $ filter isVar $ toList lnn
+  -- mapM_ print $ filter isVar $ toList lnn
+  -- putStrLn ""
+  -- mapM_ print $ filter isVar $ toList lnn'
+  mapM_ print $ toList lnn
   putStrLn ""
-  mapM_ print $ filter isVar $ toList lnn'
+  mapM_ print $ toList lnn'
   inferDebug i lnn'
   where
     lnn' = downwardPass i ns'

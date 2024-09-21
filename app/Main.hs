@@ -5,15 +5,23 @@ import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
 import qualified Data.Set as Set
 import Lib
-  ( Neuron,
+  ( Expression (..),
+    Neuron,
     Value,
+    awp,
     complete,
     con,
+    evaluate,
     find',
+    fpAwp,
+    fpFpi,
+    fpi,
     neg,
     parse,
     parseBounds',
     solveWithAssumptions,
+    tp,
+    tp',
     var,
   )
 import System.Environment
@@ -31,7 +39,8 @@ main = do
 run :: String -> String -> IO ()
 run "-h" _ = usage >> exit
 run "-v" _ = version >> exit
-run "-s" x = solveLnn x
+run "-lnn" x = solveLnn x
+run "-aw" x = solveAw x
 run "-sd" x = undefined
 run a _ = putStrLn ("error: invalid flag " ++ a) >> exit
 
@@ -55,6 +64,23 @@ solveLnn flp = do
     lnn2 = lnn1 Seq.>< Seq.fromList (natoms m lnn1)
     lnn1 = inputs Map.empty lnn0
     lnn0 = atoms m
+    m = parse Map.empty flp
+
+solveAw flp = do
+  version
+  putStrLn ""
+  putStrLn "aw"
+  putStrLn ""
+  print m
+  -- _ <- solveWithAssumptions (length lnn - 1) lnn assumptions
+  return ()
+  where
+    -- assumptions = Map.fromList . map parseBounds' $ filter (\x -> elem '[' x) $ filter (\x -> length x > 1) $ lines $ flp
+    -- lnn = rootify lnn3 lnn0
+    -- lnn3 = complete m lnn2 lnn0
+    -- lnn2 = lnn1 Seq.>< Seq.fromList (natoms m lnn1)
+    -- lnn1 = inputs Map.empty lnn0
+    -- lnn0 = atoms m
     m = parse Map.empty flp
 
 inputs as vs = Seq.fromList $ map (atomify as) vs

@@ -8,6 +8,7 @@ module Fuzzy
     negation',
     tCoNorm',
     tNorm',
+    residuum',
   )
 where
 
@@ -50,3 +51,5 @@ negation' l (x, y) = (negation l x, negation l y)
 tCoNorm' l (x, y) (x', y') = (tCoNorm l [x, x'], tCoNorm l [y, y'])
 
 tNorm' l (x, y) (x', y') = (tNorm l [x, x'], tNorm l [y, y'])
+
+residuum' l (x, y) (x', y') = (residuum l x x', residuum l y y')
