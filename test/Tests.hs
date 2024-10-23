@@ -1,5 +1,11 @@
 import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
+import qualified Data.Set as Set
+
+import Data.Foldable (toList)
+import Data.List (find, deleteBy)
+import Data.Maybe (maybe)
+
 import Lib
   ( Eval (..),
     Expression (..),
@@ -32,6 +38,9 @@ import Lib
   )
 import qualified System.Exit as Exit
 import Test.HUnit
+
+import System.Random
+import Control.Monad
 
 tinyLnn =
   Seq.fromList
@@ -261,6 +270,10 @@ aA = upwardPass tinyOneDirectionA
 aA' = downwardPass 14 tinyOneDirectionA'
 
 {-- B --}
+-- a :- -b
+-- b :- -a
+-- c :- b, -d
+-- d :- b, -c
 tinyOneDirectionB =
   Seq.fromList
     [ var "a" (Just (0.4 :: Double)) (Just (0.4 :: Double)), -- 0
@@ -369,3 +382,160 @@ tiny0 =
       ("c", (0.0, 1.0)),
       ("d", (0.0, 1.0))
     ]
+
+-- rule bodies
+--
+-- a :- -b
+-- b :- -a
+-- c :- b, -d
+-- d :- b, -c
+--
+rB =
+  Seq.fromList
+    [ var "a" (Just (0.4 :: Double)) (Just (0.4 :: Double)), -- 0
+      var "b" (Just (0.6 :: Double)) (Just (0.6 :: Double)), -- 1
+      var "c" Nothing Nothing, -- 2
+      var "d" Nothing Nothing, -- 3
+      neg "-a" 0 Nothing Nothing, -- 4
+      neg "-b" 1 Nothing Nothing, -- 5
+      neg "-c" 2 Nothing Nothing, -- 6
+      neg "-d" 3 Nothing Nothing, -- 7
+      con "(AND -d b)" [7, 1] Nothing Nothing, -- 10
+      con "(AND -c b)" [6, 1] Nothing Nothing -- 11
+    ]
+
+rbI =
+  Map.fromList
+    [ ("a", (0.4, 0.4)),
+      ("b", (0.6, 0.6)),
+      ("c", (0.0, 1.0)),
+      ("d", (0.0, 1.0))
+    ]
+
+rbLNN = upwardPass rB
+--rbTP = fpTp' tinyTpI tinyTp
+rbTP = tp' tinyTpI tinyTp
+
+
+-- disjunction over rule bodies
+-- only do upwardpass and then check disjunction per atom
+--
+-- a :- -b
+-- b :- -a
+-- c :- b, -d
+-- d :- b, -c
+-- c :- e
+dorb =
+  Seq.fromList
+    [ var "a" (Just (0.4 :: Double)) (Just (0.4 :: Double)), -- 0
+      var "b" (Just (0.6 :: Double)) (Just (0.6 :: Double)), -- 1
+      var "c" Nothing Nothing, -- 2
+      var "d" Nothing Nothing, -- 3
+      var "e" Nothing Nothing, -- 4
+      neg "-a" 0 Nothing Nothing, -- 5
+      neg "-b" 1 Nothing Nothing, -- 6
+      neg "-c" 2 Nothing Nothing, -- 7
+      neg "-d" 3 Nothing Nothing, -- 8
+      con "(AND -d b)" [8, 1] Nothing Nothing, -- 9
+      con "(AND -c b)" [7, 1] Nothing Nothing, -- 10
+      dis "OR (AND -d b) e" [9, 4] Nothing Nothing -- 11
+    ]
+
+
+dorbI =
+  Map.fromList
+    [ ("a", (0.4, 0.4)),
+      ("b", (0.6, 0.6)),
+      ("c", (0.0, 1.0)),
+      ("d", (0.0, 1.0)),
+      ("e", (0.0, 1.0))
+    ]
+
+tinyTpDorb =
+  Map.fromList
+    [ ( "a",
+        [ [Neg $ Var "b" 0.0 1.0]
+        ]
+      ),
+      ( "b",
+        [ [Neg $ Var "a" 0.0 1.0]
+        ]
+      ),
+      ("c", [[Var "b" 0.0 1.0, Neg $ Var "d" 0.0 1.0], [Var "e" 0.0 1.0]]),
+      ("d", [[Var "b" 0.0 1.0, Neg $ Var "c" 0.0 1.0]]),
+      ("e", [])
+    ]
+
+-- conjunction over rules 
+-- set this conjunction to true in the downwardpass
+
+
+-- experiment-getrieben mit einer random interpretation und einem random program (mit fixer atommenge)
+-- (signifikanter anteil fuer kleinen anteil (<= 5, start bei 3) an atom) 
+-- mit gesampleter interpretation aus einer von 3 klassen
+--   * all uncertain
+--   * exact pairs 
+--   * proper intervals function per hypothesis that compares (fuzzy testing?)
+--  * guess per atom a number of rules
+--  * guess body per rule
+--  * guess literal sign
+
+-- beweis-getrieben
+
+randomBool :: IO Bool
+randomBool = head <$> replicateM 1 randomIO
+
+randomBounds :: IO (Double,Double)
+randomBounds = do
+    l <- head <$> replicateM 1 (getStdRandom (randomR (0.0,1.0)) :: IO Double)
+    u <- head <$> replicateM 1 (getStdRandom (randomR (l,1.0)) :: IO Double)
+    return (l,u)
+
+randomExactPair :: IO (Double,Double)
+randomExactPair = do
+    v <- head <$> replicateM 1 (getStdRandom (randomR (0.0,1.0)) :: IO Double)
+    return (v,v)
+
+randomInterpretationAllUncertain n = return $ replicateM n (0.0,1.0)
+
+randomInterpretationExactPairs n = return $ replicateM n randomExactPair 
+
+randomInterpretation n = return $ replicateM n randomBounds
+
+randomLiteralFrom atom = do 
+    sign <- randomBool
+    let lit = if not sign then negate atom else atom
+    return lit
+
+randomLit [] = error "empty src"
+randomLit [x] = return x
+randomLit xs = do 
+  i <- getStdRandom (randomR (0,length xs - 1)) :: IO Int
+  randomLiteralFrom $ xs !! i
+  
+incSib b l = negate l `elem` b
+--inconsistencies b = findIndices (incSib b) b 
+inconsistency b = find (incSib b) b 
+
+deleteOne :: Eq a => a -> [a] -> [a]
+deleteOne _ [] = [] -- Nothing to delete
+deleteOne x (y:ys) | x == y = ys -- Drop exactly one matching item
+deleteOne x (y:ys) = y : deleteOne x ys -- Drop one, but not this one (doesn't match).
+
+deleteMany :: Eq a => [a] -> [a] -> [a]
+deleteMany [] = id 
+deleteMany (x:xs) = deleteMany xs . deleteOne x 
+
+randomBody src ub = do
+  n <- getStdRandom (randomR (0,ub)) :: IO Int
+  xs <- replicateM n (randomLit src) 
+  -- NOTE: only works if we restrict body to 3 literals
+  let xs' = maybe xs (`deleteOne` xs)  $ inconsistency xs
+  return $ toList $ Set.fromList xs'
+      
+tightBody src maxBodySize maxNRules lp atom = do  
+    n <- randomRIO (0,maxNRules)
+    let body = []
+    return (atom, body)
+
+
