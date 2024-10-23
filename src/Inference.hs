@@ -163,8 +163,8 @@ downwardPass i lnn = downwardPass (i - 1) lnn'
   where
     lnn' = aux (Seq.index lnn i) lnn
     aux (V {}) ns = ns
-    aux (N {_s = s, _x = x, _l = l, _u = u}) ns = upd ns [(x, head (downward ns (N {_s = s, _x = x, _l = l, _u = u})))]
-    aux (I {_s = s, _x = x, _y = y, _l = l, _u = u}) ns = upd ns $ zip [x, y] (downward ns (I {_s = s, _x = x, _y = y, _l = l, _u = u}))
+    aux (N s x l u) ns = upd ns [(x, head (downward ns (N s x l u)))]
+    aux (I s x y l u) ns = upd ns $ zip [x, y] (downward ns (I s x y l u))
     aux n ns = upd ns $ zip (_xs n) (downward ns n)
     upd s [] = s
     upd s ((j, x) : xs) = upd (Seq.update j x s) xs

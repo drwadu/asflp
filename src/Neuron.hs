@@ -8,6 +8,7 @@ module Neuron
     dis,
     imp,
     update,
+    bounds
   )
 where
 
@@ -73,3 +74,5 @@ dis s xs _ _ = O {_s = s, _xs = xs, _l = bot, _u = top}
 
 imp s x y (Just l) (Just u) = I {_s = s, _x = x, _y = y, _l = l, _u = u}
 imp s x y _ _ = I {_s = s, _x = x, _y = y, _l = bot, _u = top}
+
+bounds n = (_l n,_u n)

@@ -14,6 +14,7 @@ import Lib
     LogicalNeuron (..),
     Pass (..),
     Value,
+    Neuron (..),
     awp,
     con,
     dis,
@@ -35,6 +36,7 @@ import Lib
     tp',
     upwardPass,
     var,
+    bounds
   )
 import qualified System.Exit as Exit
 import Test.HUnit
@@ -42,12 +44,16 @@ import Test.HUnit
 import System.Random
 import Control.Monad
 
+import ImmediateConsequenceOperator ((>*), (>*<), eval, eval')
+import qualified H1
+import qualified H2
+
 tinyLnn =
   Seq.fromList
-    [ var "a" (Just (0.2 :: Double)) (Just (0.7 :: Double)), -- 0
-      var "b" (Just (0.3 :: Double)) (Just (0.6 :: Double)), -- 1
-      -- var "a" (Just (0.4 :: Double)) (Just (1.0 :: Double)), -- 0
-      -- var "b" (Just (0.6 :: Double)) (Just (1.0 :: Double)), -- 1
+    [ --var "a" (Just (0.2 :: Double)) (Just (0.7 :: Double)), -- 0
+      --var "b" (Just (0.3 :: Double)) (Just (0.6 :: Double)), -- 1
+      var "a" (Just (0.4 :: Double)) (Just (0.4 :: Double)), -- 0
+      var "b" (Just (0.6 :: Double)) (Just (0.6 :: Double)), -- 1
       -- var "c" (Just (0.4 :: Double)) (Just (0.4 :: Double)), -- 0
       -- var "d" (Just (0.2 :: Double)) (Just (0.2 :: Double)), -- 1
       var "c" Nothing Nothing, -- 2
@@ -496,11 +502,11 @@ randomExactPair = do
     v <- head <$> replicateM 1 (getStdRandom (randomR (0.0,1.0)) :: IO Double)
     return (v,v)
 
-randomInterpretationAllUncertain n = return $ replicateM n (0.0,1.0)
+randomInterpretationAllUncertain n = replicateM n (0.0,1.0)
 
-randomInterpretationExactPairs n = return $ replicateM n randomExactPair 
+randomInterpretationExactPairs n = replicateM n randomExactPair 
 
-randomInterpretation n = return $ replicateM n randomBounds
+randomInterpretation n = replicateM n randomBounds
 
 randomLiteralFrom atom = do 
     sign <- randomBool
@@ -527,7 +533,7 @@ deleteMany [] = id
 deleteMany (x:xs) = deleteMany xs . deleteOne x 
 
 randomBody src ub = do
-  n <- getStdRandom (randomR (0,ub)) :: IO Int
+  n <- getStdRandom (randomR (1,ub)) :: IO Int
   xs <- replicateM n (randomLit src) 
   -- NOTE: only works if we restrict body to 3 literals
   let xs' = maybe xs (`deleteOne` xs)  $ inconsistency xs
@@ -538,6 +544,80 @@ tightBody src maxBodySize maxNRules lp atom = do
     let body = []
     return (atom, body)
 
+randomFlp src n m = do 
+  k <- getStdRandom (randomR (0,n)) :: IO Int
+  replicateM (length src) $ replicateM k (randomBody src m)
+  
+
+validateH1 src n m =  do
+  p <- randomFlp src n m
+  i <- randomInterpretationExactPairs (length src)
+  let l = H1.lhs i p
+  let (r,nn) = H1.rhs i p
+  let v = l == r
+  unless v $ do
+    putStrLn "----------------------------------------------------------------------"
+    putStrLn "FAILED"
+    putStrLn ""
+    putStrLn "1 IMMEDIATE CONSEQUENCE OPERATOR APPLICATION GIVES:"
+    mapM_ print l
+    putStrLn "WHEREAS 1 UPWARD PASS ON DISJUNCTIVELY CONJOINED RULE BODIES GIVES:"
+    mapM_ print r
+    putStrLn ""
+    putStrLn "WITH"
+    putStrLn ""
+    putStrLn "interpretation:"
+    mapM_ print $ zip src i
+    putStrLn ""
+    putStrLn "program:"
+    mapM_ print $ zip src p
+    putStrLn ""
+    putStrLn "lnn:"
+    mapM_ print $ zip [0..] (toList nn)
+    putStrLn "----------------------------------------------------------------------"
+
+validateH2 src n m =  do
+  p <- randomFlp src n m
+  i <- randomInterpretation (length src)
+  let l = H2.lhs i p
+  let (r,nn) = H2.rhs i p
+  let v = l == r
+  unless v $ do
+    putStrLn "----------------------------------------------------------------------"
+    putStrLn "FAILED"
+    putStrLn ""
+    putStrLn "1 IMMEDIATE CONSEQUENCE OPERATOR APPLICATION GIVES:"
+    mapM_ print l
+    putStrLn "WHEREAS 1 UPWARD PASS AND 1 DOWNWARD PASS ON CONJUNCTION OVER RULES GIVES:"
+    mapM_ print r
+    putStrLn ""
+    putStrLn "WITH"
+    putStrLn ""
+    putStrLn "interpretation:"
+    mapM_ print $ zip src i
+    putStrLn ""
+    putStrLn "program:"
+    mapM_ print $ zip src p
+    putStrLn ""
+    putStrLn "lnn:"
+    mapM_ print $ zip [0..] (toList nn)
+    putStrLn "----------------------------------------------------------------------"
+
+kValidate k f src n m = replicateM_ k $ f src n m
+
+
+ceI = [(0.5851016622729768,0.5851016622729768), 
+  (0.9193706083381828,0.9193706083381828),
+  (0.8848069986113406,0.8848069986113406),
+  (0.5053037560549419,0.5053037560549419),
+  (0.13565261726760702,0.13565261726760702),
+  (0.26745557672062303,0.26745557672062303),
+  (0.6313567472460009,0.6313567472460009),
+  (0.29527449871282896,0.29527449871282896),
+  (0.18388582146117638,0.18388582146117638),
+  (0.5362989530719682,0.5362989530719682)
+  ]
+ceFlp = [[[-2,5]], [[-7]], [[-6,-1]], [[1]], [[-6]], [[-8]], [[-10,-9]], [[-7,-6]], [[-6,-1]], [[-2]]]
+
 
 -- does order matter?
-

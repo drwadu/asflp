@@ -23,7 +23,7 @@ module Lib
     parseBounds',
     parse,
     find',
-    Neuron,
+    Neuron (A, V, N, O, I, _s, _xs, _l, _u, _x, _y),
     complete,
     solveWithAssumptions,
     fpTp',
@@ -33,6 +33,9 @@ module Lib
     LogicalNeuron (..),
     LnnOperator (..),
     proof,
+    inferDebug,
+    bounds,
+    solveH1
   )
 where
 
@@ -54,13 +57,14 @@ import Inference
     upwardPass,
   )
 import Neuron
-  ( Neuron (V, _s),
+  ( Neuron (A, V, N, O, I, _s, _xs, _l, _u, _x, _y),
     con,
     dis,
     imp,
     neg,
     update,
     var,
+    bounds
   )
 import Parser
   ( parse,
@@ -95,6 +99,15 @@ solveWithAssumptions i lnn assumptions = do
     ns = upwardPass $ (map (conditionTo assumptions) . toList) lnn
     isVar V {} = True
     isVar _ = False
+    conditionTo m (V s l u) = maybe (V s l u) (uncurry (update (V s l u))) $ Map.lookup s m
+    conditionTo _ n = n
+
+solveH1 lnn assumptions = do
+  mapM_ (putStr . display) ns
+  putStrLn ""
+  mapM_ print ns
+  where
+    ns = upwardPass $ (map (conditionTo assumptions) . toList) lnn
     conditionTo m (V s l u) = maybe (V s l u) (uncurry (update (V s l u))) $ Map.lookup s m
     conditionTo _ n = n
 
