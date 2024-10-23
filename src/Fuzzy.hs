@@ -20,6 +20,7 @@ data Logic = Lukasiewicz | Goedel | Zadeh
   deriving (Ord, Eq, Show, Data, Typeable)
 
 class Eval a where
+  -- function name :: type signature
   negation :: Logic -> a -> a
   tCoNorm :: Foldable t => Logic -> t a -> a
   tNorm :: Logic -> [a] -> a

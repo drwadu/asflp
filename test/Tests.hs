@@ -539,3 +539,5 @@ tightBody src maxBodySize maxNRules lp atom = do
     return (atom, body)
 
 
+-- does order matter?
+

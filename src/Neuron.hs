@@ -53,7 +53,7 @@ data Neuron
       Typeable
     )
 
-update (V s  _ _) l u    = V s l  u
+update (V s  _ _) l u    = V s l u
 update (N s x _ _) l u   = N s x l u
 update (A s xs _ _) l u  = A s xs l u
 update (O s xs _ _) l u  = O s xs l u
