@@ -29,7 +29,6 @@ import Neuron
 import Text.Printf
 import Utils (remove, round')
 
--- type Net = Seq.Seq (Neuron Value)
 
 logic :: Logic
 logic = Lukasiewicz
@@ -38,7 +37,6 @@ class Pass node where
   upward :: Seq.Seq node -> node -> node
   downward :: Seq.Seq node -> node -> [node]
 
--- instance (Eval a, Ord a) => Pass (Neuron a) where
 instance Pass Neuron where
   upward lnn neuron = case neuron of
     N {_s = s, _x = x, _l = l, _u = u} -> N {_s = s, _x = x, _l = tl, _u = tu}
@@ -68,11 +66,6 @@ instance Pass Neuron where
       access = mapMaybe (`Seq.lookup` lnn)
 
   downward lnn neuron = case neuron of
-    -- similar to approximator
-    -- NOT x = (0.3,0.6)
-    -- x = (0.5, 0.6)
-    -- join (0.4,0.7) (0.5,0.6)
-    -- (0.5,0.6)
     N {_s = _, _x = x, _l = l, _u = u} -> [update x' tl tu]
       where
         (tl, tu) = aggregate (negation logic u, negation logic l) . bounds $ x'
@@ -82,17 +75,6 @@ instance Pass Neuron where
     A {_s = _, _xs = xs, _l = l, _u = u} ->
       zipWith (curry (\(i, (b, n)) -> uncurry (update n) (aggregate b (tl i, tu i)))) [0 ..] (zip bs xs')
       where
-        -- (a & b & c) (0.5, 1.0)
-        -- a (0.2,0.4) b (0.3,0.7) c (0.0,0.0)
-        -- a:
-        --  (a & b & c) <= 0 implies a = 0
-        --  otherwise: (b (u=0.7) & c (u=0.0)) -> (l=0.5)
-        -- !(b (u=0.7) & c (u=0.0)) | (l=0.5)
-        -- (!b (u=0.7) | !c (u=0.0)) | (l=0.5)
-        -- !(!(!b (u=0.7) | !c (u=0.0)) & !(l=0.5))
-        -- !((b (u=0.7) & c (u=0.0)) & !(l=0.5))
-        --    if we take maximum contribution of (b & c), how much does
-        --    a have to contribute to reach lower bound of (a & b & c)
         tl j =
           if l > bot
             then residuum logic (tNorm logic . map snd . remove j $ bs) l
@@ -103,27 +85,13 @@ instance Pass Neuron where
             else top
         bs = map bounds xs'
         xs' = access xs
-    -- O {_s = _, _xs = xs, _l = l, _u = u} -> map (\(i, (b, n)) -> uncurry (update n) (aggregate b (tl i, tu i))) (zip [0 ..] $ zip bs xs')
     O {_s = _, _xs = xs, _l = l, _u = u} ->
       zipWith (curry (\(i, (b, n)) -> uncurry (update n) (aggregate b (tl i, tu i)))) [0 ..] (zip bs xs')
       where
-        -- (a | b | c) (0.5, 1.0)
-        -- a (0.2,0.4) b (0.3,0.7) c (0.0,0.0)
-        -- a:
-        --  (a | b | c) <= 0 implies a = 0
-        --  otherwise: (!b (u=0.7) & !c (u=0.0)) & ((l=0.5))
-        --
-        --    je größer die upper bounds von b und c, desto geringer muss anteil von lower bound von a sein
-        --    e.g.:
-        --    extremwerte für b und c: (!0.0 & !0.0) & 0.5 = (1 & 1) & l=0.5 -> also muss a 0.5 im lower bound haben
-        --
-        --    if we disable maximum contribution of !(b | c), how much does
-        --    a have to contribute to reach lower bound of (a | b | c)
         tl j =
           if l > bot
             then tNorm logic [tNorm logic . map (negation logic . snd) . remove j $ bs, l]
             else bot
-        --    extremwerte für b und c: (!0.0 & !0.0) & 1.0 = (1 & 1) & u -> also muss a 1.0 im upper bound haben
         tu j =
           if u < top
             then tNorm logic [tNorm logic . map (negation logic . fst) . remove j $ bs, u]
@@ -157,7 +125,6 @@ upwardPass lnn = aux (toList lnn) Nothing
     aux (x : xs) (Just ns) = aux xs $ Just (ns Seq.|> upward ns x)
     aux xs Nothing = aux xs $ Just Seq.Empty
 
--- downwardPass :: (Eval a, Ord a) => Int -> Seq.Seq (Neuron a) -> Seq.Seq (Neuron a)
 downwardPass 0 lnn = lnn
 downwardPass i lnn = downwardPass (i - 1) lnn'
   where
@@ -210,22 +177,11 @@ fc = "\x1b[0;30;41m[F]\x1b[0m"
 uc :: String
 uc = "\x1b[0;30;44m[U]\x1b[0m"
 
--- display (V a l u)
---  | (l <= negation Lukasiewicz 0.5) && (u >= 0.5) =
---      uc ++ " " ++ show (round' l, round' u) ++ " T=" ++ show (round' ((l + u) / 2.0)) ++ " I=" ++ show (round' $ 1.0 - abs (l - u)) ++ " " ++ a ++ "\n"
---  | (l >= 0.5) && (u >= 0.5) =
---      tc ++ " " ++ show (round' l, round' u) ++ " T=" ++ show (round' ((l + u) / 2.0)) ++ " I=" ++ show (round' $ 1.0 - abs (l - u)) ++ " " ++ a ++ "\n"
---  | otherwise =
---      fc ++ " " ++ show (round' l, round' u) ++ " T=" ++ show (round' ((l + u) / 2.0)) ++ " I=" ++ show (round' $ 1.0 - abs (l - u)) ++ " " ++ a ++ "\n"
--- display _ = ""
-
-squ x = x * x
-
 display (V a l u)
   | (l <= negation Lukasiewicz 0.5) && (u >= 0.5) =
-      uc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ printf "%.2f" (round' (1.0 - (sqrt ((squ (1 - l) + squ (1 - u)) / 2.0)))) ++ " " ++ a ++ "\n"
+      uc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ a ++ "\n"
   | (l >= 0.5) && (u >= 0.5) =
-      tc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ printf "%.2f" (round' (1.0 - (sqrt ((squ (1 - l) + squ (1 - u)) / 2.0)))) ++ " " ++ a ++ "\n"
+      tc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ a ++ "\n"
   | otherwise =
-      fc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ printf "%.2f" (round' (1.0 - (sqrt ((squ (1 - l) + squ (1 - u)) / 2.0)))) ++ " " ++ a ++ "\n"
+      fc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ a ++ "\n"
 display _ = ""

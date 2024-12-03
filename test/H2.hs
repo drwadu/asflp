@@ -23,7 +23,8 @@ import Lib
     var,
     imp,
     Neuron (..),
-    bounds
+    bounds,
+    update
   )
 
 
@@ -31,9 +32,13 @@ lhs = eval'
 
 rhs i flp = (res,lnn)
   where
-    res = map bounds . take k . toList $ lnn
+    res = map bounds . take k . toList $ lnn''
+    lnn = downwardPass (j-1) lnn'' 
     k = length i
-    lnn = downwardPass (k-1) $ upwardPass $ constructLnn i flp
+    lnn'' = Seq.take j lnn' Seq.|> root
+    root = update (fromMaybe (error "") $ Seq.lookup (j-1) lnn') (1.0 :: Double) (1.0 :: Double)
+    j = Seq.length lnn'
+    lnn' = upwardPass $ constructLnn i flp
     cmp n n'
      | (read (head $ words $ _s n) :: Int) < (read (head $ words $ _s n') :: Int)  = LT  
      | (read (head $ words $ _s n) :: Int) == (read (head $ words $ _s n') :: Int) = EQ

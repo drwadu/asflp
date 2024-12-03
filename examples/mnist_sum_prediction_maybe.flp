@@ -1,8 +1,26 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% sum is 8
 %%% first digit is 3
+prediction(0)[0.0;0.0]
+prediction(1)[0.0;0.0]
+prediction(2)[0.0;0.0]
+prediction(3)[0.0;0.0]
+prediction(4)[0.0;0.0]
+prediction(5)[0.0;0.0]
+prediction(6)[0.0;0.0]
+prediction(7)[0.0;0.0]
 prediction(8)[1.0;1.0]
-digitL(6)[1.0;1.0]
+prediction(9)[0.0;0.0]
+prediction(10)[0.0;0.0]
+prediction(11)[0.0;0.0]
+prediction(12)[0.0;0.0]
+prediction(13)[0.0;0.0]
+prediction(14)[0.0;0.0]
+prediction(15)[0.0;0.0]
+prediction(16)[0.0;0.0]
+prediction(17)[0.0;0.0]
+prediction(18)[0.0;0.0]
+digitL(3)[1.0;1.0]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 digitL(0) :- -digitL(1), -digitL(2), -digitL(3), -digitL(4), -digitL(5), -digitL(6), -digitL(7), -digitL(8), -digitL(9)
 digitL(1) :- -digitL(0), -digitL(2), -digitL(3), -digitL(4), -digitL(5), -digitL(6), -digitL(7), -digitL(8), -digitL(9)

@@ -22,7 +22,7 @@ negligent :- sports, duration
 
 % known cases of fallen off transmitters
 % model as domain/expert knowledge
-fell_off :-[0.0;1.0] sports, misuse
+fell_off :- sports, misuse
 fell_off :- sports, -misuse
 fell_off :- negligent, misuse
 fell_off :- negligent, -misuse

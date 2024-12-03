@@ -61,18 +61,18 @@ update (O s xs _ _) l u  = O s xs l u
 update (I s x y _ _) l u = I s x y l u
 
 var s (Just l) (Just u) = V s l u
-var s _ _ = V s bot top
+var s _ _               = V s bot top
 
-neg s x (Just l) (Just u) = N {_s = s, _x = x, _l = l, _u = u}
-neg s x _ _ = N {_s = s, _x = x, _l = bot, _u = top}
+neg s x (Just l) (Just u) = N s x l u
+neg s x _ _               = N s x bot top
 
-con s xs (Just l) (Just u) = A {_s = s, _xs = xs, _l = l, _u = u}
-con s xs _ _ = A {_s = s, _xs = xs, _l = bot, _u = top}
+con s xs (Just l) (Just u) = A s xs l u
+con s xs _ _               = A s xs bot top
 
-dis s xs (Just l) (Just u) = O {_s = s, _xs = xs, _l = l, _u = u}
-dis s xs _ _ = O {_s = s, _xs = xs, _l = bot, _u = top}
+dis s xs (Just l) (Just u) = O s xs l u
+dis s xs _ _               = O s xs bot top
 
-imp s x y (Just l) (Just u) = I {_s = s, _x = x, _y = y, _l = l, _u = u}
-imp s x y _ _ = I {_s = s, _x = x, _y = y, _l = bot, _u = top}
+imp s x y (Just l) (Just u) = I s x y l u
+imp s x y _ _               = I s x y bot top
 
 bounds n = (_l n,_u n)
