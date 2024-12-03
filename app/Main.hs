@@ -1,28 +1,19 @@
 module Main where
 
-import Data.Foldable (toList)
 import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
 import qualified Data.Set as Set
 import Lib
-  ( Expression (..),
-    Neuron,
-    Value,
-    awp,
+  ( Neuron,
     complete,
     con,
-    evaluate,
     find',
-    fpAwp,
-    fpFpi,
-    fpi,
     neg,
     parse,
     parseBounds',
     solveWithAssumptions,
-    tp,
-    tp',
     var,
+    solveH1
   )
 import System.Environment
 import System.Exit
@@ -58,7 +49,7 @@ solveLnn flp = do
   _ <- solveWithAssumptions (length lnn - 1) lnn assumptions
   return ()
   where
-    assumptions = Map.fromList . map parseBounds' $ filter (\x -> elem '[' x) $ filter (\x -> length x > 1) $ lines $ flp
+    assumptions = Map.fromList . map parseBounds' $ filter (\x -> '[' `elem` x) $ filter (\x -> length x > 1) $ lines flp
     lnn = rootify lnn3 lnn0
     lnn3 = complete m lnn2 lnn0
     lnn2 = lnn1 Seq.>< Seq.fromList (natoms m lnn1)
@@ -71,16 +62,16 @@ solveAw flp = do
   putStrLn ""
   putStrLn "aw"
   putStrLn ""
-  print m
   -- _ <- solveWithAssumptions (length lnn - 1) lnn assumptions
+  _ <- solveH1 lnn assumptions
   return ()
   where
-    -- assumptions = Map.fromList . map parseBounds' $ filter (\x -> elem '[' x) $ filter (\x -> length x > 1) $ lines $ flp
-    -- lnn = rootify lnn3 lnn0
-    -- lnn3 = complete m lnn2 lnn0
-    -- lnn2 = lnn1 Seq.>< Seq.fromList (natoms m lnn1)
-    -- lnn1 = inputs Map.empty lnn0
-    -- lnn0 = atoms m
+    assumptions = Map.fromList . map parseBounds' $ filter (\x -> '[' `elem` x) $ filter (\x -> length x > 1) $ lines flp
+    lnn = rootify lnn3 lnn0
+    lnn3 = complete m lnn2 lnn0
+    lnn2 = lnn1 Seq.>< Seq.fromList (natoms m lnn1)
+    lnn1 = inputs Map.empty lnn0
+    lnn0 = atoms m
     m = parse Map.empty flp
 
 inputs as vs = Seq.fromList $ map (atomify as) vs
@@ -103,7 +94,6 @@ atoms m = vs
 natoms m ns = map (\x -> neg x (find' ns (tail x)) Nothing Nothing) vs
   where
     vs = Set.toList . Set.fromList $ filter (\x -> head x == '-') bs
-    hs = Map.keys m
     bs = concat . concat . Map.foldr (:) [] $ m
 
 rootify a b = a Seq.>< (Seq.fromList [root a b])
