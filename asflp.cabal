@@ -58,13 +58,20 @@ library
     exposed-modules:  Lib
 
     -- Modules included in this library but not exported.
-    other-modules: Fuzzy, Neuron, Inference, Utils, Parser
+    other-modules: Fuzzy, Neuron, Inference, Utils, Parser, Interface
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:    base, containers
     hs-source-dirs:   src
     default-language: Haskell2010
+
+foreign-library blafoo
+  type: native-shared
+  other-modules: Lib, Fuzzy, Neuron, Inference, Utils, Parser, Interface
+  build-depends:    base, containers
+  hs-source-dirs:   src
+  default-language: Haskell2010
 
 executable asflp
     -- Import common warning flags.
@@ -74,7 +81,7 @@ executable asflp
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: Lib, Fuzzy, Neuron, Inference, Utils, Parser
+    other-modules: Lib, Fuzzy, Neuron, Inference, Utils, Parser, Interface
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -97,11 +104,11 @@ test-suite test
     build-depends: base, HUnit, asflp, containers, random
     default-language: Haskell2010
 
-test-suite experiments
-    type: exitcode-stdio-1.0
-    ghc-options: -Wall
-    hs-source-dirs: experiments
-    main-is:    Experiments.hs
-    other-modules: Sampler, H1, Ico, Lib
-    build-depends: base, HUnit, asflp, containers, QuickCheck, checkers, random
-    default-language: Haskell2010
+--test-suite experiments
+--    type: exitcode-stdio-1.0
+--    ghc-options: -Wall
+--    hs-source-dirs: experiments
+--    main-is:    Experiments.hs
+--    other-modules:  H1, Ico, Lib
+--    build-depends: base, HUnit, asflp, containers, QuickCheck, checkers, random
+--    default-language: Haskell2010

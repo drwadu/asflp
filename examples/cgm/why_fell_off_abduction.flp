@@ -1,0 +1,35 @@
+%fell_off[1.0;1.0]
+%duration[0.1;0.1]
+%used_stomach[1.0;1.0]
+
+%fell_off[0.0;0.0]
+%malfunction[1.0;1.0]
+
+fell_off[1.0;1.0]
+%malfunction[0.0;0.0]
+% at least 6 days and at most 8 days
+duration[0.6;0.8]
+used_stomach[1.0;1.0]
+
+used_stomach :- -used_arm
+used_arm :- -used_stomach
+
+misuse :- -used_stomach
+
+negligent :- sports, used_arm
+negligent :- sports, duration
+
+fell_off :- sports, -negligent
+fell_off :- negligent, error
+
+malfunction :- used_arm, error
+malfunction :- duration, -used_arm, error
+
+% integrity constraint
+ic[0.0;0.0]
+ic :- fell_off, malfunction, -ic
+%ic :- fell_off, malfunction, error, -ic
+
+
+
+

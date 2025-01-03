@@ -1,0 +1,14 @@
+true[1.0;1.0]
+fst[0.638;0.638]
+snd[0.8;0.8]
+
+
+logic(a) :- true, fst, -snd
+logic(a) :- true, -fst, snd
+logic(a) :- false, fst, snd
+logic(a) :- false, -fst, -snd
+
+logic(b) :- -logic(a)
+
+logic(c) :- false, -fst
+logic(c) :- true, fst

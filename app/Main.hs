@@ -13,7 +13,8 @@ import Lib
     parseBounds',
     solveWithAssumptions,
     var,
-    solveH1
+    solveH1,
+    lnnFromCnf
   )
 import System.Environment
 import System.Exit
@@ -33,6 +34,7 @@ run "-v" _ = version >> exit
 run "-lnn" x = solveLnn x
 run "-aw" x = solveAw x
 run "-sd" x = undefined
+run "-lnncnf" x = solveCnf x
 run a _ = putStrLn ("error: invalid flag " ++ a) >> exit
 
 usage = putStrLn "usage: asflp [-vhcs] [file_path]"
@@ -99,3 +101,22 @@ natoms m ns = map (\x -> neg x (find' ns (tail x)) Nothing Nothing) vs
 rootify a b = a Seq.>< (Seq.fromList [root a b])
   where
     root a b = con "root" (filter (> 0) $ map (\x -> find' a ("proof " ++ x)) b) Nothing Nothing
+
+solveCnf flp = do
+  version
+  putStrLn ""
+  putStrLn "ASP -> CNF -> completion -> LNN inference"
+  putStrLn ""
+  putStrLn $ "#neurons: " ++ (show $ Seq.length lnn)
+  putStrLn ""
+  --_ <- mapM_ (putStrLn . show) lnn
+  solveWithAssumptions (length lnn - 1) lnn (Map.fromList [("a",(0.4 :: Double,0.4 :: Double)),("b",(0.6 :: Double,0.6 :: Double))])
+  --solveWithAssumptions (length lnn - 1) lnn (Map.fromList [("digitL(3)",(1.0 :: Double, 1.0 :: Double)),("digitR(6)",(1.0 :: Double, 1.0 :: Double))])
+  --solveWithAssumptions (length lnn - 1) lnn (Map.fromList [("predicted_sum(10)",(1.0 :: Double, 1.0 :: Double))])
+  --solveWithAssumptions (length lnn - 1) lnn (Map.fromList [("digitL(3)",(1.0 :: Double, 1.0 :: Double))])
+  --solveWithAssumptions (length lnn - 1) lnn (Map.fromList [("predicted_sum(0)",(0.5 :: Double, 0.5 :: Double)),("predicted_sum(18)",(0.5 :: Double, 0.5 :: Double))])
+  --solveWithAssumptions (length lnn - 1) lnn (Map.fromList [("action(up,0)",(1.0 :: Double, 1.0 :: Double)),("monster(1,2,1)",(1.0 :: Double, 1.0 :: Double)),("agent(1,2,1)",(1.0 :: Double, 1.0 :: Double))])
+  --solveWithAssumptions (length lnn - 1) lnn (Map.fromList [("fell_off",(1.0 :: Double, 1.0 :: Double))])
+  where
+    lnn = lnnFromCnf flp
+

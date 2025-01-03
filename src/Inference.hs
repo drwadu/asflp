@@ -5,6 +5,7 @@ module Inference
     infer,
     inferDebug,
     display,
+    displayRaw,
     lnnCmp,
   )
 where
@@ -185,3 +186,10 @@ display (V a l u)
   | otherwise =
       fc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ a ++ "\n"
 display _ = ""
+
+displayRaw (V a l u)
+  | (l <= negation Lukasiewicz 0.5) && (u >= 0.5) = a ++ "[" ++ show l ++ ";" ++ show u ++ "] " 
+  | (l >= 0.5) && (u >= 0.5) = a ++ "[" ++ show l ++ ";" ++ show u ++ "] " 
+  | otherwise = a ++ "[" ++ show l ++ ";" ++ show u ++ "] " 
+displayRaw _ = ""
+
