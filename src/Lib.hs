@@ -149,7 +149,7 @@ justification assumptions lnn atom = if rhs /= [] then res else []
     res
       | lchi > 1 =
           ands
-            ++ [ dis ("[" ++ atom ++ "] OR " ++ unwords (map (_s . findNeuronByIndex lnn) idxs ++ map _s ands)) chi Nothing Nothing,
+            ++ [ dis (atom ++ " OR " ++ unwords (map (_s . findNeuronByIndex lnn) idxs ++ map _s ands)) chi Nothing Nothing,
                  imp ("rhs " ++ atom) j v Nothing Nothing,
                  imp ("lhs " ++ atom) v j Nothing Nothing,
                  con ("proof " ++ atom) [j + 1, j + 2] Nothing Nothing
