@@ -5,6 +5,8 @@ import Data.Foldable (toList)
 import Data.List (intercalate)
 import Lnn.Logic (Bounds, Symbol)
 
+import Text.Printf (printf)
+
 import qualified Data.Map as Map
 import qualified Data.Sequence as Seq
 
@@ -68,4 +70,4 @@ data Lnn = Lnn {ast :: Ast, size :: Int, delta :: Double}
 -- deriving (Show)
 
 instance Show Lnn where
-  show lnn@(Lnn nn n d) = show n ++ " " ++ show d ++ "\n" ++ intercalate "\n" (map (\n -> unwords [show (bounds n), show (_delta n), " // "] ++ showw lnn n) (toList nn))
+  show lnn@(Lnn nn k d) = show k ++ " " ++ show d ++ "\n" ++ intercalate "\n" (map (\n -> "(" ++ printf "%.2f" (_lb n) ++ "," ++ printf "%.2f" (_ub n) ++ ") " ++ printf "%.2f" d ++ " // " ++ showw lnn n) (toList nn))

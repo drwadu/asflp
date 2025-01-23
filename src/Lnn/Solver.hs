@@ -2,16 +2,18 @@ module Lnn.Solver
   ( Pass (..), upwardPass, downwardPass, Lnn (..), approximate, infer, solve
   ) where
 
-import Lnn.Neuro (bounds, Neuron (..), Lnn (..), update, diff)
+import Lnn.Neuro (bounds, Neuron (..), Lnn (..), update, diff, showw)
 import Lnn.Logic
   ( Eval (..),
     Logic (..),
     bot,
+    negation,
     negation',
     tCoNorm',
     tNorm',
     top,
   )
+import Text.Printf (printf)
 import Utils (remove)
 
 import Data.Foldable (toList)
@@ -23,6 +25,7 @@ import qualified Data.Set as Set
 
 import Data.Maybe (fromMaybe, mapMaybe)
 import Lnn.Compiler (compile)
+import Lib (dis)
 
 
 -- | aggregates two input pairs of bounds
@@ -168,33 +171,58 @@ downwardPass (Lnn nn k _) = Lnn nn' k d'
     d' = (sum . map _delta . toList $ nn') / fromIntegral (2*k)
     nn' = downwardPass' (k - 1) nn
 
-approximate lnn = downwardPass lnn'
+approximate lnn = do 
+    putStrLn $ "------ UP " ++ printf "%.2f" d'
+    mapM_ (putStr . reveal lnn') nn'
+    putStrLn $ "------ DOWN " ++ printf "%.2f" d''
+    mapM_ (putStr . reveal lnn'') nn''
+    return lnn''
   where
-    lnn' = upwardPass lnn
+    lnn''@(Lnn nn'' _ d'') = downwardPass lnn'
+    lnn'@(Lnn nn' _ d')  = upwardPass lnn
 
-changes lnn@(Lnn nn k d) = show d ++ "\n" ++ show (Lnn (Seq.filter ((==) 0.0 . _delta) nn) k d)
---changes lnn@(Lnn nn k d) = show d ++ "\n" ++ show (Seq.fromList $ filter ((>) 0.0 . _delta) $ toList nn)
+reveal lnn n = if d > 0.0 then "(" ++ printf "%.2f" (_lb n) ++ "," ++ printf "%.2f" (_ub n) ++ ") " ++ printf "%.2f" d ++ " // " ++ showw lnn n ++ "\n" else ""
+  where
+    d = _delta n 
+
+tc :: String
+tc = "\x1b[0;30;42m[T]\x1b[0m"
+
+fc :: String
+fc = "\x1b[0;30;41m[F]\x1b[0m"
+
+uc :: String
+uc = "\x1b[0;30;44m[U]\x1b[0m"
+
+display (Atom a l u _)
+  | (l <= negation logic 0.5) && (u >= 0.5) =
+      uc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ a ++ "\n"
+  | (l >= 0.5) && (u >= 0.5) =
+      tc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ a ++ "\n"
+  | otherwise =
+      fc ++ " [" ++ printf "%.2f" l ++ ";" ++ printf "%.2f" u ++ "]" ++ " " ++ a ++ "\n"
+display _ = ""
 
 infer lnn = do 
+  lnn' <- approximate lnn
   if delta lnn' <= epsilon 
   then 
     do
-    putStrLn "+++++++"
-    return lnn' 
+      putStrLn $ "++++++ DONE " ++ printf "%.2f" (delta lnn')
+      mapM_ (putStr . display) $ ast lnn'
+      return lnn' 
   else 
-    do
-     putStrLn "-------"
-     print lnn'
-     infer lnn'
+      infer lnn'
   where
-    lnn' = approximate lnn
     epsilon = 0.0001
 
 solve flp inputs = do 
-    putStrLn "-------"
-    print uLnn
-    putStrLn "-------"
-    print dLnn
+    putStrLn "~~~~~~ IN"
+    mapM_ print (Map.toList inputs)
+    putStrLn $ "------ UP " ++ printf "%.2f" (delta uLnn)
+    mapM_ (putStr . reveal uLnn) $ ast uLnn
+    putStrLn $ "------ DOWN T " ++ printf "%.2f" (delta dLnn)
+    mapM_ (putStr . reveal dLnn) $ ast dLnn
     infer dLnn
       where 
         dLnn = downwardPass lnnT 
