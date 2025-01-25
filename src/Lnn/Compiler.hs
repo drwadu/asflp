@@ -1,31 +1,25 @@
 module Lnn.Compiler (compile) where
 
-import Lnn.Logic (Flp, Interpretation, Symbol, bot, top)
-import Lnn.Neuro (Lnn (Lnn), Neuron (..), Supports, showw, stringifyAnd, update)
-import Lnn.Parser (parse, parseBounds)
-
-import qualified Data.Map as Map
-import qualified Data.Sequence as Seq
-import qualified Data.Set as Set
-
 import Data.Either (partitionEithers)
 import Data.Foldable (toList)
 import Data.List (sort)
+import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
-
-
-defaultDelta = 0.0
+import qualified Data.Sequence as Seq
+import qualified Data.Set as Set
+import Lnn.Logic (Flp, Interpretation, Symbol, bot, top)
+import Lnn.Neuro (Lnn (Lnn), Neuron (..), Supports, showw, stringifyAnd, update)
+import Lnn.Parser (parse, parseBounds)
 
 
 compile :: Flp -> Interpretation -> Lnn
 compile flp input = Lnn ((Seq.fromList . map (conditionTo input) . toList) nn) n d
  where
   Lnn nn n d = rootify . complete supports atoms . feedNegativeLiterals supports . feedAtoms supports $ emptyLnn
-  --assumptions = Map.fromList . map parseBounds $ filter (\x -> '[' `elem` x) $ filter (\x -> length x > 1) $ lines flp
-  emptyLnn = Lnn Seq.empty 0 defaultDelta
+  emptyLnn = Lnn Seq.empty 0 (-1.0)
   atoms = Map.keys supports
   supports = atomsSupports flp
-  conditionTo m atom@(Atom s _ _ _) = maybe atom (uncurry (update atom)) $ Map.lookup s m
+  conditionTo m atom@(Atom s _ _) = maybe atom (uncurry (update atom)) $ Map.lookup s m
   conditionTo _ x = x
 
 
@@ -42,21 +36,21 @@ proof supports lnn@(Lnn nn n d) atom = if rhs /= [] then Lnn (nn Seq.>< Seq.from
   neuronsToAdd
     | nSupports > 1 =
         constructedSupports
-          ++ [ Or idxs bot top defaultDelta
-             , IfThen bodyFormulaIdx atomIdx bot top defaultDelta
-             , IfThen atomIdx bodyFormulaIdx bot top defaultDelta
-             , Proof (bodyFormulaIdx + 1) (bodyFormulaIdx + 2) bot top defaultDelta
+          ++ [ Or idxs bot top
+             , IfThen bodyFormulaIdx atomIdx bot top
+             , IfThen atomIdx bodyFormulaIdx bot top
+             , Proof (bodyFormulaIdx + 1) (bodyFormulaIdx + 2) bot top
              ]
     | not (null constructedSupports) =
         constructedSupports
-          ++ [ IfThen (k + 1) atomIdx bot top defaultDelta
-             , IfThen atomIdx (k + 1) bot top defaultDelta
-             , Proof (k + 2) (k + 3) bot top defaultDelta
+          ++ [ IfThen (k + 1) atomIdx bot top
+             , IfThen atomIdx (k + 1) bot top
+             , Proof (k + 2) (k + 3) bot top
              ]
     | otherwise =
-        [ IfThen (head idxs) atomIdx bot top defaultDelta
-        , IfThen atomIdx (head idxs) bot top defaultDelta
-        , Proof (k + 1) (k + 2) bot top defaultDelta
+        [ IfThen (head idxs) atomIdx bot top
+        , IfThen atomIdx (head idxs) bot top
+        , Proof (k + 1) (k + 2) bot top
         ]
   atomIdx = findNeuronIndex lnn atom
   bodyFormulaIdx = k + length constructedSupports + 1
@@ -86,7 +80,7 @@ andify :: Lnn -> [String] -> Either Int Neuron
 andify lnn xs =
   if length xs > 1
     then case findNeuronIndex lnn x of
-      -1 -> Right $ And (map (findNeuronIndex lnn) xs') bot top defaultDelta
+      -1 -> Right $ And (map (findNeuronIndex lnn) xs') bot top
       n -> Left n
     else Left . findNeuronIndex lnn . head $ xs
  where
@@ -102,7 +96,7 @@ feedAtoms :: Supports -> Lnn -> Lnn
 feedAtoms supports (Lnn nn n d) = Lnn (nn Seq.>< lits) (n + length lits) d
  where
   lits = Seq.fromList . Set.toList . Set.fromList $ map litify $ atoms ++ supportsBodiesAtoms
-  litify lit = if head lit == '-' then Atom (tail lit) bot top defaultDelta else Atom lit bot top defaultDelta
+  litify lit = if head lit == '-' then Atom (tail lit) bot top else Atom lit bot top
   atoms = Map.keys supports
   supportsBodiesAtoms = concat . concat . Map.foldr (:) [] $ supports
 
@@ -111,11 +105,11 @@ feedNegativeLiterals :: Supports -> Lnn -> Lnn
 feedNegativeLiterals supports lnn@(Lnn nn n d) = Lnn (nn Seq.>< lits) (n + length lits) d
  where
   lits = Seq.fromList . Set.toList . Set.fromList . map notify $ supportsBodies
-  notify lit = Not (findNeuronIndex lnn lit) bot top defaultDelta
+  notify lit = Not (findNeuronIndex lnn lit) bot top
   supportsBodies = Set.toList . Set.fromList . map tail . filter ((==) '-' . head) $ concat . concat . Map.foldr (:) [] $ supports
 
 
-rootify lnn@(Lnn nn n d) = Lnn (nn Seq.|> And (idxs nn) bot top defaultDelta) (n + 1) d
+rootify lnn@(Lnn nn n d) = Lnn (nn Seq.|> And (idxs nn) bot top) (n + 1) d
  where
   idxs = map (findNeuronIndex lnn . showw lnn) . toList . Seq.filter isProof
   isProof (Proof{}) = True

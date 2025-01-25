@@ -11,20 +11,26 @@ module Lnn.Logic
   , tCoNorm'
   , tNorm'
   , residuum'
-  ) where
+  )
+where
 
+import Data.Data (Data, Typeable)
 import qualified Data.Map as Map
-
-import Data.Data (Data, Typeable) 
 
 
 type Bounds = (Double, Double)
+
+
 type Symbol = String
+
+
 type Flp = String
+
+
 type Interpretation = Map.Map String Bounds
 
 
-data Logic =  Goedel | Lukasiewicz | Zadeh
+data Logic = Goedel | Lukasiewicz | Zadeh
   deriving (Ord, Eq, Show, Data, Typeable)
 
 
@@ -59,13 +65,13 @@ negation' :: (Eval a, Eval b) => Logic -> (a, b) -> (a, b)
 negation' l (x, y) = (negation l x, negation l y)
 
 
-tCoNorm' :: (Eval a, Eval b) => Logic -> (a, b) -> (a, b) -> (a,b)
+tCoNorm' :: (Eval a, Eval b) => Logic -> (a, b) -> (a, b) -> (a, b)
 tCoNorm' l (x, y) (x', y') = (tCoNorm l [x, x'], tCoNorm l [y, y'])
 
 
-tNorm' :: (Eval a, Eval b) => Logic -> (a, b) -> (a, b) -> (a,b)
+tNorm' :: (Eval a, Eval b) => Logic -> (a, b) -> (a, b) -> (a, b)
 tNorm' l (x, y) (x', y') = (tNorm l [x, x'], tNorm l [y, y'])
 
 
-residuum' :: (Eval a, Eval b) => Logic -> (a, b) -> (a, b) -> (a,b)
+residuum' :: (Eval a, Eval b) => Logic -> (a, b) -> (a, b) -> (a, b)
 residuum' l (x, y) (x', y') = (residuum l x x', residuum l y y')

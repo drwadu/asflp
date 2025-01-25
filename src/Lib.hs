@@ -6,14 +6,14 @@ module Lib
     var,
     Value,
     Pass (..),
-    upwardPass,
-    downwardPass,
+    upwardPass_,
+    downwardPass_,
     solve,
     solveDebug,
     parseBounds',
     parse,
     find',
-    Neuron (A, V, N, O, I, _s, _xs, _l, _u, _x, _y),
+    Neuron_ (A, V, N, O, I, _s, _xs, _l, _u, _x, _y, _ws),
     complete,
     solveWithAssumptions,
     solveWithAssumptionsStr,
@@ -23,10 +23,23 @@ module Lib
     inferDebug,
     bounds,
     solveH1,
+    update_,
     update,
-    lnnFromCnf
+    lnnFromCnf,
+    compile,
+    upwardPass,
+    downwardPass,
+    compile_, 
+    Lnn (..),
+    Neuron,
+    approximate,
+    inferDbg
   )
 where
+
+import Lnn.Compiler ( compile )
+import Lnn.Solver ( upwardPass, downwardPass, approximate, inferDbg)
+import Lnn.Neuro ( Lnn (..), Neuron (..), update )
 
 import Data.Either
 import Data.Foldable (toList)
@@ -40,19 +53,19 @@ import Inference
   ( Pass (..),
     display,
     displayRaw,
-    downwardPass,
+    downwardPass_,
     infer,
     inferDebug,
     lnnCmp,
-    upwardPass,
+    upwardPass_,
   )
 import Neuron
-  ( Neuron (A, V, N, O, I, _s, _xs, _l, _u, _x, _y),
+  ( Neuron_ (A, V, N, O, I, _s, _xs, _l, _u, _x, _y, _ws),
     con,
     dis,
     imp,
     neg,
-    update,
+    update_,
     var,
     bounds
   )
@@ -68,15 +81,16 @@ solveWithAssumptionsStr i lnn assumptions = do
   x <- inferDebug i ns'
   --l <- show $ length $ concatMap displayRaw $ toList x
   --return l
-  l <-  concatMap displayRaw $ toList x
+  --l <-  concatMap displayRaw $ toList x
+  let l =  concatMap displayRaw $ toList x
   return l
   where
     ns' = Seq.take i ns Seq.|> root
-    root = update (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
-    ns = upwardPass $ (map (conditionTo assumptions) . toList) lnn
+    root = update_ (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
+    ns = upwardPass_ $ (map (conditionTo assumptions) . toList) lnn
     isVar V {} = True
     isVar _ = False
-    conditionTo m (V s l u) = maybe (V s l u) (uncurry (update (V s l u))) $ Map.lookup s m
+    conditionTo m (V s l u) = maybe (V s l u) (uncurry (update_ (V s l u))) $ Map.lookup s m
     conditionTo _ n = n
 
 solveWithAssumptions i lnn assumptions = do
@@ -90,11 +104,11 @@ solveWithAssumptions i lnn assumptions = do
   mapM_ (putStr . display) $ filter (\n -> (not ((_l n == 0.0) && (_u n == 1.0))) && (not $ List.isPrefixOf "aux_" (_s n))) $ toList x
   where
     ns' = Seq.take i ns Seq.|> root
-    root = update (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
-    ns = upwardPass $ (map (conditionTo assumptions) . toList) lnn
+    root = update_ (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
+    ns = upwardPass_ $ (map (conditionTo assumptions) . toList) lnn
     isVar V {} = True
     isVar _ = False
-    conditionTo m (V s l u) = maybe (V s l u) (uncurry (update (V s l u))) $ Map.lookup s m
+    conditionTo m (V s l u) = maybe (V s l u) (uncurry (update_ (V s l u))) $ Map.lookup s m
     conditionTo _ n = n
 
 solveH1 lnn assumptions = do
@@ -102,16 +116,16 @@ solveH1 lnn assumptions = do
   putStrLn ""
   mapM_ print ns
   where
-    ns = upwardPass $ (map (conditionTo assumptions) . toList) lnn
-    conditionTo m (V s l u) = maybe (V s l u) (uncurry (update (V s l u))) $ Map.lookup s m
+    ns = upwardPass_ $ (map (conditionTo assumptions) . toList) lnn
+    conditionTo m (V s l u) = maybe (V s l u) (uncurry (update_ (V s l u))) $ Map.lookup s m
     conditionTo _ n = n
 
 solve i lnn = infer i lnn'
   where
-    lnn' = downwardPass i ns'
+    lnn' = downwardPass_ i ns'
     ns' = Seq.take i ns Seq.|> root
-    root = update (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
-    ns = upwardPass lnn
+    root = update_ (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
+    ns = upwardPass_ lnn
 
 solveDebug i lnn = do
   mapM_ print $ toList lnn
@@ -119,10 +133,10 @@ solveDebug i lnn = do
   mapM_ print $ toList lnn'
   inferDebug i lnn'
   where
-    lnn' = downwardPass i ns'
+    lnn' = downwardPass_ i ns'
     ns' = Seq.take i ns Seq.|> root
-    root = update (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
-    ns = upwardPass lnn
+    root = update_ (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
+    ns = upwardPass_ lnn
     isVar (V {}) = True
     isVar _ = False
 
@@ -139,7 +153,8 @@ andify ns xs =
       _ -> Right (con s (map (find' ns) xs') Nothing Nothing)
     else Left . find' ns . head $ xs
   where
-    s = "(AND " ++ unwords xs' ++ ")"
+    --s = "(AND " ++ unwords xs' ++ ")"
+    s = "( _ :- " ++ unwords xs' ++ ")"
     xs' = List.sort xs
 
 justification assumptions lnn atom = if rhs /= [] then res else []
@@ -223,3 +238,45 @@ extractClauses m lnn (clause:clauses) xs  = extractClauses m lnn' clauses xs
 indexifyClause m xs clause = map f clause
   where 
     f l = if l < 0 then fromMaybe 0 $ List.elemIndex ("-" ++ (unwrapAtom m $ tail . show $ l)) xs else fromMaybe 0 $ List.elemIndex (unwrapAtom m $ show l) xs
+
+
+
+---------
+
+compile_ flp inputs = lnn
+  where
+    lnn = (map (conditionTo inputs) . toList) $ rootify_ lnn3 lnn0
+    lnn3 = complete m lnn2 lnn0
+    lnn2 = lnn1 Seq.>< Seq.fromList (natoms_ m lnn1)
+    lnn1 = inputs_ Map.empty lnn0
+    lnn0 = atoms_ m
+    m = parse Map.empty flp
+    conditionTo m n = maybe n (uncurry (update_ n)) $ Map.lookup (_s n) m
+    --conditionTo m (V s l u) = maybe (V s l u) (uncurry (update_ (V s l u))) $ Map.lookup s m
+    --conditionTo _ n = n
+    
+
+
+inputs_ as vs = Seq.fromList $ map (atomify_ as) vs
+
+atomify_ :: Map.Map String (Double, Double) -> String -> Neuron_
+atomify_ as a = uncurry (var a) ret
+  where
+    ret = case Map.lookup a as of
+      Just (x, y) -> (Just x, Just y)
+      _ -> (Nothing, Nothing)
+
+atoms_ m = vs
+  where
+    vs = Set.toList . Set.fromList $ hs ++ map (\x -> if head x == '-' then tail x else x) bs
+    hs = Map.keys m
+    bs = concat . concat . Map.foldr (:) [] $ m
+
+natoms_ m ns = map (\x -> neg x (find' ns (tail x)) Nothing Nothing) vs
+  where
+    vs = Set.toList . Set.fromList $ filter (\x -> head x == '-') bs
+    bs = concat . concat . Map.foldr (:) [] $ m
+
+rootify_ a b = a Seq.>< (Seq.fromList [root a b])
+  where
+    root a b = con "root" (filter (> 0) $ map (\x -> find' a ("proof " ++ x)) b) Nothing Nothing

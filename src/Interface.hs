@@ -64,6 +64,6 @@ natoms m ns = map (\x -> neg x (find' ns (tail x)) Nothing Nothing) vs
     vs = Set.toList . Set.fromList $ filter (\x -> head x == '-') bs
     bs = concat . concat . Map.foldr (:) [] $ m
 
-rootify a b = a Seq.>< (Seq.fromList [root a b])
+rootify a b = a Seq.>< Seq.fromList [root a b]
   where
     root a b = con "root" (filter (> 0) $ map (\x -> find' a ("proof " ++ x)) b) Nothing Nothing
