@@ -9,7 +9,9 @@ module Lib
     upwardPass_,
     downwardPass_,
     solve,
+    showw,
     solveDebug,
+    parseBounds,
     parseBounds',
     parse,
     find',
@@ -31,15 +33,17 @@ module Lib
     downwardPass,
     compile_, 
     Lnn (..),
-    Neuron,
+    Neuron (Atom, Not, And, Or),
     approximate,
     inferDbg
   )
 where
 
 import Lnn.Compiler ( compile )
-import Lnn.Solver ( upwardPass, downwardPass, approximate, inferDbg)
-import Lnn.Neuro ( Lnn (..), Neuron (..), update )
+import Lnn.Solver ( upwardPass, downwardPass, approximate, inferDbg, solve)
+import Lnn.Neuro ( Lnn (..), Neuron (..), update, showw )
+import Lnn.Parser ( parseBounds )
+
 
 import Data.Either
 import Data.Foldable (toList)
@@ -120,12 +124,12 @@ solveH1 lnn assumptions = do
     conditionTo m (V s l u) = maybe (V s l u) (uncurry (update_ (V s l u))) $ Map.lookup s m
     conditionTo _ n = n
 
-solve i lnn = infer i lnn'
-  where
-    lnn' = downwardPass_ i ns'
-    ns' = Seq.take i ns Seq.|> root
-    root = update_ (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
-    ns = upwardPass_ lnn
+--solve i lnn = infer i lnn'
+--  where
+--    lnn' = downwardPass_ i ns'
+--    ns' = Seq.take i ns Seq.|> root
+--    root = update_ (fromMaybe (error "") $ Seq.lookup i ns) (1.0 :: Double) (1.0 :: Double)
+--    ns = upwardPass_ lnn
 
 solveDebug i lnn = do
   mapM_ print $ toList lnn
