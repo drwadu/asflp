@@ -38,9 +38,10 @@ boundsDelimiter = ";"
 
 
 parse :: Map.Map [Char] [[[Char]]] -> String -> Map.Map [Char] [[[Char]]]
-parse support = Map.unionsWith (++) . map (headBody support) . filter normalRules . lines
+parse support flp = Map.unionsWith (++) . map (headBody support) . filter normalRules $ filter notEmpty $ lines flp
  where
-  normalRules line = (head line /= comment) && (':' `elem` line) && (length line > 1)
+  normalRules line = (head line /= comment) && (':' `elem` line)  
+  notEmpty line = length line > 1
 
 
 parseBounds :: [Char] -> ([Char], (Double, Double))
