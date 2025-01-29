@@ -1,7 +1,7 @@
 % transmitter fell off
 fell_off[1.0;1.0]
-% has been worn 1 day (10% of 10 days)
-duration[0.1;0.1]
+% worn 2-4 days out of 10
+duration[0.2;0.4]
 % was placed on arm
 placed_on(arm)[1.0;1.0]
 
