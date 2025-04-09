@@ -2,6 +2,11 @@ from ctypes import cdll, c_char_p
 from dataclasses import dataclass
 from typing import Any, Optional
 
+BOT, TOP = 0.0, 1.0
+UNCERTAIN = (BOT, TOP)
+FALSE = (BOT, BOT)
+TRUE = (TOP, TOP)
+
 
 @dataclass
 class Flp:
@@ -98,7 +103,7 @@ class Flp:
                     and not f.startswith("-")
                     and not "cr_aux" in f
                 ):
-                    self.atoms[f] = (l,u)
+                    self.atoms[f] = (l, u)
                     if l == u:
                         print(round(l, 2), f)
                     else:
@@ -114,26 +119,38 @@ class Flp:
                     and not f.startswith("-")
                     and not "cr_aux" in f
                 ):
-                    self.atoms[f] = (l,u)
+                    self.atoms[f] = (l, u)
 
         print(self.atoms)
 
+
 if __name__ == "__main__":
     lib = "../dist-newstyle/build/x86_64-linux/ghc-9.4.8/asflp-0.1.0.0/f/hsasflp/build/hsasflp/libhsasflp.so"
-    #flp = Flp("a :- -b\nb :- -a", lib=lib)
-    #print(flp.infer({"a": (0.2, 1.0), "b": (0.6, 1.0)}))
-    #flp.add_rule("c", ["b", "-d"])
+    # flp = Flp("a :- -b\nb :- -a", lib=lib)
+    # print(flp.infer({"a": (0.2, 1.0), "b": (0.6, 1.0)}))
+    # flp.add_rule("c", ["b", "-d"])
     ##print(flp.infer({"a": (0.2, 1.0), "b": (0.6, 1.0)}))
-    #flp.add_rule("d", ["b", "-c"])
-    #print(flp.infer({"a": (0.2, 1.0), "b": (0.6, 1.0)}))
+    # flp.add_rule("d", ["b", "-c"])
+    # print(flp.infer({"a": (0.2, 1.0), "b": (0.6, 1.0)}))
 
-    src = open("../examples/cgm_why_abduction.flp").read()
+    # src = open("../examples/cgm_why_abduction.pl").read()
+    src = """
+    misuse :- -used(arm)
+    negligence :- sports, used(stomach)
+    negligence :- sports, duration
+
+    fell_off :- sports, misuse
+    fell_off :- sports, -misuse
+    fell_off :- negligence, misuse
+    fell_off :- negligence, -misuse
+
+    % integrity constraint
+    ic[0.0;0.0]
+    ic :- -ic, used(arm), used(stomach)
+    """
     flp = Flp(src, lib=lib)
-    #for k, v in flp.infer({"duration": (0.1, 0.1), "used_stomach": (1.0, 1.0),"fell_off": (1.0, 1.0)}).items():
-    for k, v in flp.infer({"duration": (0.9, 0.9), "sports": (1.0, 1.0),"fell_off": (1.0, 1.0)}).items():
+    for k, v in flp.infer(
+        {"ic": FALSE, "duration": (0.2, 0.4), "used(arm)": TRUE, "fell_off": TRUE}
+    ).items():
+        # for k, v in flp.infer({}).items():
         print(v, k)
-
-    #src = open("../examples/mnist_sum.flp").read()
-    #flp = Flp(src, lib=lib)
-    #for k, v in flp.infer({"digitL": (0.2, 1.0)}).items():
-    #    print(v, k)

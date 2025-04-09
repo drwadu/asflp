@@ -1,12 +1,16 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-module CBindings where
+module Interface.CBindings where
 
-import Lib (
+import Lnn.Neuro (
     Lnn (..),
     Neuron (..),
-    parseBounds,
     showw,
+ )
+import Lnn.Parser (
+    parseBounds,
+ )
+import Lnn.Solver (
     solve,
  )
 
