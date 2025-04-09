@@ -81,7 +81,7 @@ type Supports = Map.Map Symbol [[Symbol]]
 type Ast = Seq.Seq Neuron
 
 
--- | lopical neural network (LNN)
+-- | logical neural network (LNN)
 data Lnn = Lnn {ast :: Ast, size :: Int, delta :: Double}
 
 

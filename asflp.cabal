@@ -1,10 +1,8 @@
 cabal-version:      3.0
 name:               asflp
 version:            0.1.0.0
--- A short (one-line) description of the package.
--- synopsis:
--- A longer description of the package.
--- description:
+synopsis:
+description:
 license:            MIT
 license-file:       LICENSE
 author:             drwadu
@@ -15,25 +13,16 @@ common warnings
     ghc-options: -Wall
 library
     exposed-modules:  
-      Lib
       Lnn.Solver 
       Lnn.Parser 
       Lnn.Compiler 
       Lnn.Logic 
       Lnn.Neuro 
-
-    -- Modules included in this library but not exported.
+      Ico.Solver 
+      Ico.Parser 
     other-modules: 
-      Fuzzy 
-      Neuron 
-      Inference 
       Utils 
-      Parser 
-      --Infer 
-    --, Interface
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
+      -- Interface
     build-depends:    base, containers
     hs-source-dirs:   src
     default-language: Haskell2010
@@ -47,36 +36,19 @@ library
 
 executable asflp
     import:           warnings
-
-    -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
-
-    -- Modules included in this executable, other than Main.
     other-modules: 
-      Lib 
-      Fuzzy 
-      Neuron 
-      Inference 
       Utils 
-      Parser 
       Lnn.Solver 
       Lnn.Parser 
       Lnn.Compiler 
       Lnn.Logic 
       Lnn.Neuro 
-      --Infer
-    --, Interface,
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-
-    -- Other library packages from which modules are imported.
+      Ico.Solver 
+      Ico.Parser 
+      --Interface
     build-depends:    base, containers
-
-    -- Directories containing source files.
     hs-source-dirs:   app, src
-
-    -- Base language which the package is written in.
     default-language: Haskell2010
 
 test-suite test

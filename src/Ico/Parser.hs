@@ -1,4 +1,4 @@
-module Lnn.Parser
+module Ico.Parser
   ( parse
   , parseBounds
   )

@@ -8,6 +8,9 @@ import Lnn.Solver
   ( solve
   , solveDbg
   )
+import Ico.Solver
+  ( solveIco
+  )
 import System.Environment
 import System.Exit
 
@@ -30,6 +33,7 @@ run :: String -> String -> IO ()
 run "-h" _ = usage >> exit
 run "-v" _ = version >> exit
 run "-dbg" x = solveLnnDbg x
+run "-ico" x = solveI x
 run _ x = solveLnn x
 
 
@@ -47,7 +51,15 @@ solveLnn flp = do
   putStrLn ""
   putStrLn "ASP -> completion -> LNN inference"
   putStrLn ""
-  _ <- solve  flp (readInputs flp) 
+  _ <- solve flp (readInputs flp) 
+  return ()
+
+solveI flp = do
+  version
+  putStrLn ""
+  putStrLn "ASP -> ico"
+  putStrLn ""
+  _ <- solveIco flp 
   return ()
 
 

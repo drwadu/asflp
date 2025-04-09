@@ -49,6 +49,9 @@ logic :: Logic
 logic = Lukasiewicz
 
 
+-- logic = Goedel
+-- logic = Zadeh
+
 class Pass a where
   upward :: Seq.Seq a -> a -> a
   downward :: Seq.Seq a -> a -> [a]
@@ -99,10 +102,12 @@ instance Pass Neuron where
       zipWith (curry (\(i, (b, n)) -> uncurry (update n) (aggregate b (tl i, tu i)))) [0 ..] (zip bs xs')
      where
       tl j =
+        -- max (residuum logic (tNorm logic . map snd . remove j $ bs) l) bot
         if l > bot
           then residuum logic (tNorm logic . map snd . remove j $ bs) l
           else bot
       tu j =
+        -- min (residuum logic (tNorm logic . map fst . remove j $ bs) u) top
         if u < top
           then residuum logic (tNorm logic . map fst . remove j $ bs) u
           else top
@@ -113,10 +118,12 @@ instance Pass Neuron where
       zipWith (curry (\(i, (b, n)) -> uncurry (update n) (aggregate b (tl i, tu i)))) [0 ..] (zip bs xs')
      where
       tl j =
+        -- max (tNorm logic [tNorm logic . map (negation logic . snd) . remove j $ bs, l]) bot
         if l > bot
           then tNorm logic [tNorm logic . map (negation logic . snd) . remove j $ bs, l]
           else bot
       tu j =
+        -- min (tNorm logic [tNorm logic . map (negation logic . fst) . remove j $ bs, u]) top
         if u < top
           then tNorm logic [tNorm logic . map (negation logic . fst) . remove j $ bs, u]
           else top
@@ -141,10 +148,12 @@ instance Pass Neuron where
       zipWith (curry (\(i, (b, n)) -> uncurry (update n) (aggregate b (tl i, tu i)))) [0 ..] (zip bs xs')
      where
       tl j =
+        -- max (residuum logic (tNorm logic . map snd . remove j $ bs) l) bot
         if l > bot
           then residuum logic (tNorm logic . map snd . remove j $ bs) l
           else bot
       tu j =
+        -- min (residuum logic (tNorm logic . map fst . remove j $ bs) u) top
         if u < top
           then residuum logic (tNorm logic . map fst . remove j $ bs) u
           else top
@@ -242,8 +251,6 @@ inferDbg lnn = do
   epsilon = 0.0001
 
 
-
-
 infer lnn = do
   lnn'@(Lnn _ _ d) <- approximate lnn
   if lnnCmp (ast lnn) (ast lnn') <= epsilon
@@ -270,6 +277,7 @@ solve flp inputs = do
   lnnT = Lnn (Seq.take (k - 1) (ast uLnn) Seq.|> update (fromMaybe undefined (nn Seq.!? (k - 1))) top top) k (delta uLnn)
   uLnn = upwardPass lnn
   lnn@(Lnn nn k _) = compile flp inputs
+
 
 solveDbg flp inputs = do
   putStrLn "~~~~~~ IN"
